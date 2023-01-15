@@ -1,11 +1,43 @@
 package main
 
-import(
+import (
 	"fmt"
 	"log"
 	"net/http"
 )
 
-func main(){
-	
+func formHandler(w http.ResponseWriter, r *http.Request){
+	if err := r.ParseForm(); err != nil{
+		fmt.Fprintf(w,"Parsing form failed %v", err)
+	}
+	fmt.Fprintf(w, "POST request successful")
+	name:= r.FormValue("name")
+	fmt.Fprintf(w,"Name %s",name)
 }
+
+func helloHandler(w http.ResponseWriter, r *http.Request){
+	if r.URL.Path != "/hello" {
+		http.Error(w,"404 Not found", http.StatusNotFound)
+		return
+	}
+
+	if r.Method != "GET"{
+		http.Error(w,"404 Not found", http.StatusNotFound)
+		return
+	}
+		fmt.Fprintf(w,"Hello!")
+}
+
+func main(){
+	fileServer := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fileServer)
+	http.HandleFunc("/form",formHandler)
+	http.HandleFunc("/hello",helloHandler)
+
+	fmt.Println("Starting server on 8080")
+	err:= http.ListenAndServe(":8080",nil)
+	if err != nil {
+		log.Fatal("Failed to start server",err)
+	}
+}
+
